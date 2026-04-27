@@ -1,8 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router';
 import { Menu, X, ShoppingCart, Phone, Instagram, LogOut, User, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
-// @ts-ignore
-const logo = require("../../assets/logo.png");
+import logo from "../../assets/logo-refined.png";
 import { useCart } from './CartContext';
 import { useAuth } from './AuthContext';
 import { Toaster } from './ui/sonner';
@@ -39,9 +38,11 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="w-14 h-14 rounded-2xl bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-strong))] p-2 shadow-lg transition-transform duration-300 group-hover:-translate-y-0.5">
-                <img src={logo} alt="Gobɛ Hemaa logo" className="w-full h-full object-contain" />
-              </div>
+              <img
+                src={logo}
+                alt="Gobɛ Hemaa logo"
+                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:-translate-y-0.5"
+              />
               <div>
                 <div className="text-2xl font-black tracking-[0.12em] text-[var(--color-ink)]">GOBƐ HEMAA</div>
                 <div className="text-xs italic text-[var(--color-muted-ink)]">...eat local, feel royal</div>
@@ -195,6 +196,11 @@ export function Layout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4 mb-8">
             <div>
+              <img
+                src={logo}
+                alt="Gobɛ Hemaa logo"
+                className="mb-4 h-14 w-auto object-contain"
+              />
               <h3 className="mb-4 text-xl font-bold text-[var(--color-accent)]">Gobɛ Hemaa</h3>
               <p className="text-sm leading-relaxed text-white/72">
                 Local Ghanaian meals prepared beautifully and delivered quickly across Accra.
