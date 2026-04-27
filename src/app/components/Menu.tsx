@@ -98,7 +98,6 @@ export function Menu() {
           <div className="mb-12 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-orange-200 rounded-3xl p-8 text-center">
             <Sparkles className="h-12 w-12 text-orange-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-orange-900 mb-2">Our Gobe Combos</h2>
-            <p className="text-orange-700">Exactly as listed on your menu sheet.</p>
           </div>
         )}
         

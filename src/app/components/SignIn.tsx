@@ -11,6 +11,7 @@ export function SignIn() {
   const { isAuthenticated, signIn, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const isCreateAccount = location.pathname === '/signup';
   const [formData, setFormData] = useState({
     fullName: user?.fullName ?? '',
     email: user?.email ?? '',
@@ -52,7 +53,11 @@ export function SignIn() {
     }
 
     signIn(formData);
-    toast.success('You are signed in and your order history is ready.');
+    toast.success(
+      isCreateAccount
+        ? 'Your account is ready and your order history has been unlocked.'
+        : 'You are signed in and your order history is ready.',
+    );
     navigate(redirectTo, { replace: true });
   };
 
@@ -64,9 +69,13 @@ export function SignIn() {
             <LockKeyhole className="h-8 w-8" />
           </div>
           <p className="eyebrow justify-center">Account Access</p>
-          <h1 className="mt-4 text-4xl font-semibold text-[var(--color-ink)]">View your order history</h1>
+          <h1 className="mt-4 text-4xl font-semibold text-[var(--color-ink)]">
+            {isCreateAccount ? 'Create your account' : 'View your order history'}
+          </h1>
           <p className="mt-3 text-base leading-7 text-[var(--color-muted-ink)] sm:text-lg">
-            Sign in with the email and phone number you use for checkout so we can attach your saved orders to your account.
+            {isCreateAccount
+              ? 'Create an account with the same email and phone number you use for checkout so we can save your orders and make repeat purchases easier.'
+              : 'Sign in with the email and phone number you use for checkout so we can attach your saved orders to your account.'}
           </p>
         </div>
 
@@ -120,7 +129,7 @@ export function SignIn() {
 
           <button type="submit" className="primary-button w-full">
             <UserCircle2 className="h-5 w-5" />
-            Sign In
+            {isCreateAccount ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
@@ -128,7 +137,13 @@ export function SignIn() {
           Checkout still works for guests. Signing in simply unlocks your saved order history and faster repeat orders.
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center justify-center gap-4 text-center sm:flex-row">
+          <Link
+            to={isCreateAccount ? '/signin' : '/signup'}
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-strong)]"
+          >
+            {isCreateAccount ? 'Already have an account? Sign in' : 'New here? Create an account'}
+          </Link>
           <Link to="/menu" className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-strong)]">
             Continue browsing the menu
             <ArrowRight className="h-4 w-4" />

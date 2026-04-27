@@ -33,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "payment", Component: Payment },
       { path: "orders", Component: OrderHistory },
       { path: "signin", Component: SignIn },
+      { path: "signup", Component: SignIn },
     ],
   },
 ]);

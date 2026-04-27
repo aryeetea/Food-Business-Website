@@ -37,15 +37,15 @@ export function Layout() {
       <header className="sticky top-0 z-50 border-b border-[var(--color-border-soft)] bg-white/85 shadow-sm backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <Link to="/" className="flex items-center space-x-3 group">
+            <Link to="/" className="flex min-w-0 items-center space-x-3 group">
               <img
                 src={logo}
                 alt="Gobɛ Hemaa logo"
-                className="h-14 w-auto object-contain transition-transform duration-300 group-hover:-translate-y-0.5"
+                className="h-12 w-auto object-contain transition-transform duration-300 group-hover:-translate-y-0.5 sm:h-14"
               />
-              <div>
-                <div className="text-2xl font-black tracking-[0.12em] text-[var(--color-ink)]">GOBƐ HEMAA</div>
-                <div className="text-xs italic text-[var(--color-muted-ink)]">...eat local, feel royal</div>
+              <div className="min-w-0">
+                <div className="truncate text-lg font-black tracking-[0.1em] text-[var(--color-ink)] sm:text-2xl sm:tracking-[0.12em]">GOBƐ HEMAA</div>
+                <div className="truncate text-[10px] italic text-[var(--color-muted-ink)] sm:text-xs">...eat local, feel royal</div>
               </div>
             </Link>
 
@@ -93,9 +93,14 @@ export function Layout() {
                   </button>
                 </>
               ) : (
-                <Link to="/signin" className="secondary-button ml-2 !h-auto !rounded-full !px-4 !py-2 text-sm">
-                  Sign In
-                </Link>
+                <div className="ml-2 flex items-center gap-2">
+                  <Link to="/signin" className="secondary-button !h-auto !rounded-full !px-4 !py-2 text-sm">
+                    Sign In
+                  </Link>
+                  <Link to="/signup" className="primary-button !h-auto !rounded-full !px-4 !py-2 text-sm">
+                    Create Account
+                  </Link>
+                </div>
               )}
               <a
                 href="tel:0505647668"
@@ -168,13 +173,22 @@ export function Layout() {
                   </button>
                 </>
               ) : (
-                <Link
-                  to="/signin"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block rounded-2xl px-4 py-3 transition-all hover:bg-[var(--color-surface)]"
-                >
-                  Sign In
-                </Link>
+                <div className="grid gap-2">
+                  <Link
+                    to="/signin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block rounded-2xl px-4 py-3 transition-all hover:bg-[var(--color-surface)]"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="primary-button !h-auto justify-center !rounded-2xl !px-4 !py-3"
+                  >
+                    Create Account
+                  </Link>
+                </div>
               )}
               <a
                 href="tel:0505647668"
