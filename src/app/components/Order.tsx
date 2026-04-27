@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from './CartContext';
 
 export function Order() {
@@ -9,156 +9,141 @@ export function Order() {
   const deliveryFee = 10;
   const grandTotal = total + (items.length > 0 ? deliveryFee : 0);
 
-  const handleCheckout = () => {
-    if (items.length > 0) {
-      navigate('/payment');
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header */}
-      <div className="bg-[#7d3d2b] text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl mb-4">
-            Your <span className="text-[#ffd700]">Order</span>
-          </h1>
-          <p className="text-xl text-white/80">Review and complete your order</p>
+    <div className="page-shell py-8 sm:py-10">
+      <section className="mx-auto max-w-7xl">
+        <div className="hero-panel px-6 py-10 sm:px-10 sm:py-12">
+          <p className="eyebrow text-[var(--color-accent)]">Cart Review</p>
+          <h1 className="mt-4 text-4xl font-semibold text-white sm:text-5xl">Your order</h1>
+          <p className="mt-4 max-w-2xl text-base leading-8 text-white/78 sm:text-lg">
+            Review quantities, update your cart, and move on to payment when everything looks right.
+          </p>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {items.length === 0 ? (
-          /* Empty Cart */
-          <div className="text-center py-20">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="h-12 w-12 text-gray-400" />
+        <div className="mt-8">
+          {items.length === 0 ? (
+            <div className="surface-card py-14 text-center">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--color-surface)] text-[var(--color-primary)]">
+                <ShoppingBag className="h-12 w-12" />
+              </div>
+              <h2 className="text-3xl font-semibold text-[var(--color-ink)]">Your cart is empty</h2>
+              <p className="mt-3 text-lg text-[var(--color-muted-ink)]">Add some delicious items from the menu to get started.</p>
+              <Link to="/menu" className="primary-button mt-8 inline-flex">
+                Browse Menu
+                <ArrowRight className="h-5 w-5" />
+              </Link>
             </div>
-            <h2 className="text-3xl mb-4 text-gray-700">Your cart is empty</h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Add some delicious items from our menu!
-            </p>
-            <Link
-              to="/menu"
-              className="inline-flex items-center bg-[#7d3d2b] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#6a3424] transition-colors"
-            >
-              Browse Menu
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl mb-6 text-[#7d3d2b]">Cart Items</h2>
-                <div className="space-y-4">
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-[1.55fr_0.95fr]">
+              <div className="surface-card">
+                <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Cart items</h2>
+                <div className="mt-6 space-y-4">
                   {items.map((item) => (
-                    <div
+                    <article
                       key={item.id}
-                      className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg"
+                      className="animate-fade-in rounded-[1.5rem] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-4 sm:p-5"
                     >
-                      <div className="flex-1">
-                        <h3 className="text-lg text-[#7d3d2b] mb-1">{item.name}</h3>
-                        <p className="text-gray-600">GH₵ {item.price}</p>
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-xl font-semibold text-[var(--color-ink)]">{item.name}</h3>
+                          <p className="mt-1 text-sm text-[var(--color-muted-ink)]">{item.category}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 sm:justify-end">
+                          <div className="inline-flex items-center gap-3 rounded-full border border-[var(--color-border-soft)] bg-white px-2 py-2">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              aria-label={`Decrease quantity of ${item.name}`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)] transition-colors hover:bg-[var(--color-surface)]"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <span className="min-w-[2rem] text-center text-base font-semibold text-[var(--color-ink)]">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              aria-label={`Increase quantity of ${item.name}`}
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-ink)] transition-colors hover:bg-[var(--color-surface)]"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          <div className="min-w-[5.5rem] text-right text-lg font-semibold text-[var(--color-primary)]">
+                            GH₵ {(item.price * item.quantity).toFixed(2)}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => removeItem(item.id)}
+                            aria-label={`Remove ${item.name} from cart`}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-rose-600 transition-colors hover:bg-rose-50"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <span className="text-lg min-w-[2rem] text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                      <div className="text-lg text-[#7d3d2b] min-w-[5rem] text-right">
-                        GH₵ {item.price * item.quantity}
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
+                    </article>
                   ))}
                 </div>
               </div>
-            </div>
 
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-md p-6 sticky top-24">
-                <h2 className="text-2xl mb-6 text-[#7d3d2b]">Order Summary</h2>
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-700">
-                    <span>Subtotal</span>
-                    <span>GH₵ {total.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span>Delivery Fee</span>
-                    <span>GH₵ {deliveryFee.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between text-xl text-[#7d3d2b]">
-                      <span>Total</span>
-                      <span>GH₵ {grandTotal.toFixed(2)}</span>
+              <aside className="lg:sticky lg:top-28 lg:self-start">
+                <div className="surface-card">
+                  <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Order summary</h2>
+                  <div className="mt-6 space-y-3 text-sm">
+                    <div className="flex justify-between text-[var(--color-muted-ink)]">
+                      <span>Subtotal</span>
+                      <span>GH₵ {total.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[var(--color-muted-ink)]">
+                      <span>Delivery fee</span>
+                      <span>GH₵ {deliveryFee.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-[var(--color-border-soft)] pt-3">
+                      <div className="flex justify-between text-lg font-semibold text-[var(--color-primary)]">
+                        <span>Total</span>
+                        <span>GH₵ {grandTotal.toFixed(2)}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <button
-                  onClick={handleCheckout}
-                  className="w-full bg-[#7d3d2b] text-white py-4 rounded-lg font-semibold hover:bg-[#6a3424] transition-colors mb-4 flex items-center justify-center space-x-2"
-                >
-                  <span>Proceed to Payment</span>
-                  <ArrowRight className="h-5 w-5" />
-                </button>
-                <Link
-                  to="/menu"
-                  className="block w-full text-center border-2 border-[#7d3d2b] text-[#7d3d2b] py-4 rounded-lg font-semibold hover:bg-[#7d3d2b] hover:text-white transition-colors"
-                >
-                  Add More Items
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Alternative Order Methods */}
-      {items.length > 0 && (
-        <section className="py-12 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl md:text-3xl mb-4 text-[#7d3d2b]">
-              Prefer to Order Directly?
-            </h2>
-            <p className="text-lg text-gray-600 mb-6">
-              You can also place your order via WhatsApp or phone
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://wa.me/233553312217"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-[#25D366] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#20BD5A] transition-colors"
-              >
-                Order on WhatsApp
-              </a>
-              <a
-                href="tel:0505647668"
-                className="inline-block bg-[#7d3d2b] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#6a3424] transition-colors"
-              >
-                Call to Order
-              </a>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/payment')}
+                    className="primary-button mt-6 w-full"
+                  >
+                    Proceed to Payment
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+
+                  <Link to="/menu" className="secondary-button mt-4 w-full justify-center">
+                    Add More Items
+                  </Link>
+                </div>
+              </aside>
             </div>
+          )}
+        </div>
+      </section>
+
+      {items.length > 0 && (
+        <section className="mx-auto mt-10 max-w-5xl rounded-[2rem] bg-white/85 p-8 text-center shadow-[var(--shadow-soft)]">
+          <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Prefer to order directly?</h2>
+          <p className="mt-3 text-[var(--color-muted-ink)]">You can still place your order by WhatsApp or phone if that works better for you.</p>
+          <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
+            <a
+              href="https://wa.me/233553312217"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-[#25D366] px-6 py-3 font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 hover:bg-[#20BD5A]"
+            >
+              Order on WhatsApp
+            </a>
+            <a href="tel:0505647668" className="secondary-button justify-center">
+              Call to Order
+            </a>
           </div>
         </section>
       )}

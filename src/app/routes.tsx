@@ -6,15 +6,23 @@ import { About } from "./components/About";
 import { Contact } from "./components/Contact";
 import { Order } from "./components/Order";
 import { Payment } from "./components/Payment";
+import { AuthProvider } from "./components/AuthContext";
 import { CartProvider } from "./components/CartContext";
+import { OrderHistoryProvider } from "./components/OrderHistoryContext";
+import { OrderHistory } from "./components/OrderHistory";
+import { SignIn } from "./components/SignIn";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <CartProvider>
-        <Layout />
-      </CartProvider>
+      <AuthProvider>
+        <OrderHistoryProvider>
+          <CartProvider>
+            <Layout />
+          </CartProvider>
+        </OrderHistoryProvider>
+      </AuthProvider>
     ),
     children: [
       { index: true, Component: Home },
@@ -23,6 +31,8 @@ export const router = createBrowserRouter([
       { path: "contact", Component: Contact },
       { path: "order", Component: Order },
       { path: "payment", Component: Payment },
+      { path: "orders", Component: OrderHistory },
+      { path: "signin", Component: SignIn },
     ],
   },
 ]);

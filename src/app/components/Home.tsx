@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { ArrowRight, Clock, Shield, Sparkles, Heart, Star } from 'lucide-react';
+// @ts-ignore
 import bannerImage from "../../assets/main.png";
 
 export function Home() {
@@ -8,7 +9,7 @@ export function Home() {
       icon: Sparkles,
       title: 'Authentic Flavors',
       description: 'Traditional Ghanaian recipes passed down through generations',
-      color: 'from-[#7d3d2b] to-[#5a2a1e]',
+      color: 'from-[#de6f12] to-[#b85600]',
     },
     {
       icon: Shield,
@@ -33,25 +34,25 @@ export function Home() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#7d3d2b] via-[#6a3424] to-[#5a2a1e]">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#de6f12] via-[#c95f09] to-[#a94900]">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
           <div className="max-w-3xl">
             <div className="inline-block mb-6">
-              <span className="bg-[#ffd700]/20 backdrop-blur-sm text-[#ffd700] px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="bg-white/18 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold">
                 🍛 Accra's Favorite Food Spot
               </span>
             </div>
             <h1 className="text-5xl md:text-7xl mb-6 text-white font-black leading-tight">
               Welcome to
-              <span className="block mt-2 text-[#ffd700]">
+              <span className="block mt-2 text-white/95">
                 Gobɛ Hemaa
               </span>
             </h1>
-            <p className="text-2xl md:text-3xl text-[#ffd700] mb-4 font-medium italic">
-              ...the life saver
+            <p className="text-2xl md:text-3xl text-white/90 mb-4 font-medium italic">
+              ...eat local, feel royal
             </p>
             <p className="text-xl text-white/90 mb-10 leading-relaxed">
               Experience authentic Ghanaian cuisine delivered fresh to your doorstep. 
@@ -60,14 +61,14 @@ export function Home() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 to="/menu"
-                className="group inline-flex items-center justify-center bg-[#ffd700] text-[#7d3d2b] px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-all shadow-2xl"
+                className="group inline-flex items-center justify-center bg-white text-[#de6f12] px-8 py-4 rounded-2xl font-bold hover:scale-105 transition-all shadow-2xl"
               >
                 View Menu
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/order"
-                className="inline-flex items-center justify-center bg-white/10 backdrop-blur-sm border-2 border-[#ffd700] text-[#ffd700] px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all"
+                className="inline-flex items-center justify-center bg-white/10 backdrop-blur-sm border-2 border-white/70 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all"
               >
                 Order Now
               </Link>
@@ -93,8 +94,8 @@ export function Home() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
               <div className="p-8 text-white">
-                <h2 className="text-3xl md:text-4xl font-bold mb-2">Fresh. Authentic. Delicious.</h2>
-                <p className="text-lg text-white/90">Made daily with the finest ingredients</p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-2">Eat local, feel royal</h2>
+                <p className="text-lg text-white/90">Local, authentic, delicious.</p>
               </div>
             </div>
           </div>
@@ -105,7 +106,7 @@ export function Home() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl mb-4 font-black text-[#7d3d2b]">
+            <h2 className="text-4xl md:text-5xl mb-4 font-black text-[#de6f12]">
               Why Choose Us?
             </h2>
             <p className="text-xl text-gray-600">
@@ -130,7 +131,7 @@ export function Home() {
       </section>
 
       {/* Popular Items Section */}
-      <section className="py-20 bg-gradient-to-br from-[#7d3d2b] via-[#6a3424] to-[#5a2a1e]">
+      <section className="py-20 bg-gradient-to-br from-[#de6f12] via-[#c95f09] to-[#a94900]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl mb-4 text-white font-black">
@@ -142,9 +143,9 @@ export function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { name: 'Gobɛ Special', price: '35', description: 'Beans with ripe plantain', rating: 5 },
-              { name: 'Jollof Rice', price: '30', description: 'With your choice of protein', rating: 5 },
-              { name: 'Fried Rice', price: '30', description: 'Served with chicken or fish', rating: 5 },
+              { name: 'Gobe Combo', price: '35', description: 'Beans/plantain/chilli/egg/sausage/garnished oil', rating: 5 },
+              { name: 'Special Gobe Combo', price: '45', description: 'Beans/assorted mix/plantain/egg/sausage/garnished oil', rating: 5 },
+              { name: 'Assorted Jollof rice', price: '80', description: 'Assorted Jollof rice', rating: 5 },
             ].map((item, index) => (
               <div
                 key={index}
@@ -152,11 +153,11 @@ export function Home() {
               >
                 <div className="flex items-center gap-1 mb-4">
                   {[...Array(item.rating)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 fill-[#ffd700] text-[#ffd700]" />
+                    <Star key={i} className="h-5 w-5 fill-white text-white" />
                   ))}
                 </div>
                 <h3 className="text-3xl font-bold mb-2 text-white">{item.name}</h3>
-                <p className="text-4xl mb-4 font-black text-[#ffd700]">GH₵ {item.price}</p>
+                <p className="text-4xl mb-4 font-black text-white">GH₵ {item.price}</p>
                 <p className="text-white/90 text-lg">{item.description}</p>
               </div>
             ))}
@@ -164,7 +165,7 @@ export function Home() {
           <div className="text-center mt-12">
             <Link
               to="/menu"
-              className="inline-flex items-center bg-[#ffd700] text-[#7d3d2b] px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-all shadow-2xl text-lg"
+              className="inline-flex items-center bg-white text-[#de6f12] px-10 py-4 rounded-2xl font-bold hover:scale-105 transition-all shadow-2xl text-lg"
             >
               See Full Menu
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -176,8 +177,8 @@ export function Home() {
       {/* CTA Section */}
       <section className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl md:text-5xl mb-6 font-black text-[#7d3d2b]">
-            Ready to Experience the Life Saver?
+          <h2 className="text-4xl md:text-5xl mb-6 font-black text-[#de6f12]">
+            Ready to experience royalty in a local dish?
           </h2>
           <p className="text-xl text-gray-600 mb-10 leading-relaxed">
             Order now and let us deliver delicious, nutritious meals right to your doorstep.
@@ -185,7 +186,7 @@ export function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/order"
-              className="inline-flex items-center justify-center bg-[#7d3d2b] text-[#ffd700] px-10 py-4 rounded-2xl font-bold hover:shadow-xl transition-all text-lg"
+              className="inline-flex items-center justify-center bg-[#de6f12] text-white px-10 py-4 rounded-2xl font-bold hover:shadow-xl transition-all text-lg"
             >
               Order Now
             </Link>

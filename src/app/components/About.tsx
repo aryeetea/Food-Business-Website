@@ -27,12 +27,12 @@ export function About() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-[#7d3d2b] text-white py-16">
+      <div className="bg-[#de6f12] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl mb-4">
-            About <span className="text-[#ffd700]">Gobɛ Hemaa</span>
+            About <span className="text-white">Gobɛ Hemaa</span>
           </h1>
-          <p className="text-xl text-white/80">...the life saver</p>
+          <p className="text-xl text-white/85">...eat local, feel royal</p>
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export function About() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="prose prose-lg max-w-none">
-            <h2 className="text-3xl mb-6 text-[#7d3d2b]">Our Story</h2>
+            <h2 className="text-3xl mb-6 text-[#de6f12]">Our Story</h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
               Gobɛ Hemaa is a traditional fast-growing indigenous food business dedicated to providing 
               <strong> healthy, hygienic, affordable, and delicious</strong> gobɛ (beans and ripe plantain) 
@@ -49,7 +49,7 @@ export function About() {
             <p className="text-lg text-gray-700 leading-relaxed mb-6">
               The business seeks to serve high-quality, nutritious meals in a clean and customer-friendly 
               environment. We understand the importance of good food in maintaining energy and health, 
-              which is why we've earned the name <strong>"the life saver"</strong> among our loyal customers.
+              which is why our promise is <strong>"eat local, feel royal"</strong> among our loyal customers.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
               Our signature dish, gobɛ (beans with ripe plantain), is prepared fresh daily using 
@@ -64,7 +64,7 @@ export function About() {
       <section className="py-20 bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl mb-4 text-[#7d3d2b]">Our Values</h2>
+            <h2 className="text-3xl md:text-4xl mb-4 text-[#de6f12]">Our Values</h2>
             <p className="text-lg text-gray-600">
               What makes Gobɛ Hemaa special
             </p>
@@ -77,12 +77,12 @@ export function About() {
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
-                    <div className="w-12 h-12 bg-[#7d3d2b] text-[#ffd700] rounded-lg flex items-center justify-center">
+                    <div className="w-12 h-12 bg-[#de6f12] text-white rounded-lg flex items-center justify-center">
                       <value.icon className="h-6 w-6" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl mb-2 text-[#7d3d2b]">{value.title}</h3>
+                    <h3 className="text-xl mb-2 text-[#de6f12]">{value.title}</h3>
                     <p className="text-gray-600">{value.description}</p>
                   </div>
                 </div>
@@ -95,12 +95,12 @@ export function About() {
       {/* What We Serve */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl mb-8 text-center text-[#7d3d2b]">
+          <h2 className="text-3xl md:text-4xl mb-8 text-center text-[#de6f12]">
             What We Serve
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-gradient-to-br from-[#7d3d2b] to-[#5a2b1d] text-white p-8 rounded-xl">
-              <h3 className="text-2xl mb-4 text-[#ffd700]">Gobɛ Specials</h3>
+            <div className="bg-gradient-to-br from-[#de6f12] to-[#b85600] text-white p-8 rounded-xl">
+              <h3 className="text-2xl mb-4 text-white">Gobɛ Specials</h3>
               <ul className="space-y-2 text-white/90">
                 <li>• Traditional gobɛ (beans & ripe plantain)</li>
                 <li>• Gobɛ with gari</li>
@@ -108,12 +108,11 @@ export function About() {
                 <li>• Custom combinations available</li>
               </ul>
             </div>
-            <div className="bg-gradient-to-br from-[#7d3d2b] to-[#5a2b1d] text-white p-8 rounded-xl">
-              <h3 className="text-2xl mb-4 text-[#ffd700]">Rice Dishes & More</h3>
+            <div className="bg-gradient-to-br from-[#de6f12] to-[#b85600] text-white p-8 rounded-xl">
+              <h3 className="text-2xl mb-4 text-white">Rice Dishes & More</h3>
               <ul className="space-y-2 text-white/90">
-                <li>• Jollof rice</li>
-                <li>• Fried rice</li>
-                <li>• Waakye</li>
+                <li>• Braised jollof rice</li>
+                <li>• Braised fried rice</li>
                 <li>• Various proteins and sides</li>
               </ul>
             </div>
@@ -122,9 +121,9 @@ export function About() {
       </section>
 
       {/* Service Areas */}
-      <section className="py-20 bg-gradient-to-br from-[#7d3d2b] to-[#5a2b1d] text-white">
+      <section className="py-20 bg-gradient-to-br from-[#de6f12] to-[#b85600] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl mb-6 text-[#ffd700]">
+          <h2 className="text-3xl md:text-4xl mb-6 text-white">
             Serving Accra with Pride
           </h2>
           <p className="text-xl text-white/90 mb-8">
@@ -143,7 +142,7 @@ export function About() {
             </a>
             <a
               href="tel:0505647668"
-              className="inline-block bg-[#ffd700] text-[#7d3d2b] px-8 py-3 rounded-lg font-semibold hover:bg-[#ffed4e] transition-colors"
+              className="inline-block bg-white text-[#de6f12] px-8 py-3 rounded-lg font-semibold hover:bg-white/90 transition-colors"
             >
               Call Us Now
             </a>

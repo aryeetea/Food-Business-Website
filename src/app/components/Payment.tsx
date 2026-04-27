@@ -1,330 +1,530 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { CreditCard, Smartphone, CheckCircle, ArrowLeft } from 'lucide-react';
-import { useCart } from './CartContext';
+import { useMemo, useState } from 'react';
+import { Link, Navigate } from 'react-router';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  CreditCard,
+  LoaderCircle,
+  Mail,
+  MessageCircle,
+  ShieldCheck,
+  Smartphone,
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { Toaster } from './ui/sonner';
+import { useCart } from './CartContext';
+import { useAuth } from './AuthContext';
+import { type ConfirmationChannel, useOrderHistory } from './OrderHistoryContext';
+import { processGatewayPayment } from './paymentGateway';
+
+type PaymentMethod = 'mobile' | 'cash';
+type GatewaySelection = 'paystack' | 'flutterwave' | 'hubtel';
+
+interface CheckoutForm {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  instructions: string;
+  mobileNumber: string;
+  mobileProvider: string;
+  gateway: GatewaySelection;
+  confirmationChannels: ConfirmationChannel[];
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_PATTERN = /^(?:\+233|0)\d{9}$/;
 
 export function Payment() {
   const { items, total, clearCart } = useCart();
-  const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'mobile' | 'cash'>('mobile');
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
+  const { user } = useAuth();
+  const { addOrder } = useOrderHistory();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mobile');
+  const [formData, setFormData] = useState<CheckoutForm>({
+    name: user?.fullName ?? '',
+    email: user?.email ?? '',
+    phone: user?.phone ?? '',
     address: '',
-    mobileNumber: '',
-    mobileProvider: 'mtn',
     instructions: '',
+    mobileNumber: user?.phone ?? '',
+    mobileProvider: 'mtn',
+    gateway: 'paystack',
+    confirmationChannels: ['email', 'whatsapp'],
   });
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
 
   const deliveryFee = 10;
   const grandTotal = total + deliveryFee;
 
-  if (items.length === 0 && !orderPlaced) {
-    navigate('/menu');
-    return null;
+  const summaryItems = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    [items],
+  );
+
+  if (items.length === 0 && !completedOrderId) {
+    return <Navigate to="/menu" replace />;
   }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+  const handleInputChange = (field: keyof CheckoutForm, value: string | ConfirmationChannel[]) => {
+    setFormData((current) => ({
+      ...current,
+      [field]: value,
+    }));
+
+    setErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[field];
+      return nextErrors;
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const toggleConfirmationChannel = (channel: ConfirmationChannel) => {
+    const nextChannels = formData.confirmationChannels.includes(channel)
+      ? formData.confirmationChannels.filter((entry) => entry !== channel)
+      : [...formData.confirmationChannels, channel];
 
-    // Validate form
-    if (!formData.name || !formData.phone || !formData.address) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    if (paymentMethod === 'mobile' && !formData.mobileNumber) {
-      toast.error('Please enter your mobile money number');
-      return;
-    }
-
-    // Simulate order placement
-    setOrderPlaced(true);
-    clearCart();
-    toast.success('Order placed successfully!');
+    handleInputChange('confirmationChannels', nextChannels);
   };
 
-  if (orderPlaced) {
+  const validate = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      nextErrors.name = 'Please enter the customer name for this order.';
+    }
+
+    if (!EMAIL_PATTERN.test(formData.email.trim())) {
+      nextErrors.email = 'Enter a valid email address for receipts and order history.';
+    }
+
+    if (!PHONE_PATTERN.test(formData.phone.trim())) {
+      nextErrors.phone = 'Use a Ghana phone number like 0553312217 or +233553312217.';
+    }
+
+    if (!formData.address.trim()) {
+      nextErrors.address = 'Please enter the delivery address, area, or landmark.';
+    }
+
+    if (paymentMethod === 'mobile' && !PHONE_PATTERN.test(formData.mobileNumber.trim())) {
+      nextErrors.mobileNumber = 'Enter the mobile money number that should receive the payment prompt.';
+    }
+
+    if (formData.confirmationChannels.length === 0) {
+      nextErrors.confirmationChannels = 'Select at least one confirmation channel.';
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!validate()) {
+      toast.error('Please fix the highlighted fields before continuing.');
+      return;
+    }
+
+    const orderId = crypto.randomUUID();
+    const paymentReference = `GH-${Date.now()}-${orderId.slice(0, 6).toUpperCase()}`;
+
+    setIsSubmitting(true);
+
+    try {
+      let paymentStatus: 'paid' | 'pending' = paymentMethod === 'cash' ? 'pending' : 'paid';
+      let gatewayNotice = '';
+
+      if (paymentMethod === 'mobile') {
+        setIsProcessingPayment(true);
+
+        const gatewayResult = await processGatewayPayment({
+          gateway: formData.gateway,
+          amount: grandTotal,
+          currency: 'GHS',
+          customer: {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.mobileNumber,
+          },
+          reference: paymentReference,
+        });
+
+        paymentStatus = gatewayResult.status === 'success' ? 'paid' : 'pending';
+        gatewayNotice = gatewayResult.status === 'sandbox' ? gatewayResult.message : '';
+      }
+
+      addOrder({
+        id: orderId,
+        customerName: formData.name.trim(),
+        customerEmail: formData.email.trim().toLowerCase(),
+        customerPhone: formData.phone.trim(),
+        deliveryAddress: formData.address.trim(),
+        deliveryInstructions: formData.instructions.trim(),
+        confirmationChannels: formData.confirmationChannels,
+        paymentGateway: paymentMethod === 'cash' ? 'cash' : formData.gateway,
+        paymentStatus,
+        paymentReference,
+        subtotal: total,
+        deliveryFee,
+        total: grandTotal,
+        createdAt: new Date().toISOString(),
+        items: summaryItems,
+      });
+
+      clearCart();
+      setCompletedOrderId(orderId);
+      toast.success('Your order has been submitted successfully.');
+
+      if (gatewayNotice) {
+        toast.message(gatewayNotice);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to complete your payment right now.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+      setIsProcessingPayment(false);
+    }
+  };
+
+  if (completedOrderId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-        <Toaster position="top-center" />
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-12 w-12 text-green-600" />
+      <div className="page-shell py-12 sm:py-16">
+        <section className="mx-auto max-w-3xl rounded-[2rem] border border-[var(--color-border-soft)] bg-white/95 p-8 text-center shadow-[var(--shadow-soft)] sm:p-12">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <CheckCircle2 className="h-11 w-11" />
           </div>
-          <h1 className="text-3xl md:text-4xl mb-4 text-[#7d3d2b]">
-            Order Placed Successfully!
-          </h1>
-          <p className="text-lg text-gray-600 mb-6">
-            Thank you for your order! We've received it and will contact you shortly 
-            to confirm your delivery details.
+          <p className="eyebrow justify-center">Order Confirmed</p>
+          <h1 className="mt-4 text-4xl font-semibold text-[var(--color-ink)]">Your order is in</h1>
+          <p className="mt-4 text-lg leading-8 text-[var(--color-muted-ink)]">
+            We’ve recorded your order and queued confirmation by {formData.confirmationChannels.join(' and ')}.
+            {paymentMethod === 'mobile'
+              ? ' Your payment request has been handled through the selected gateway.'
+              : ' Payment will be collected on delivery.'}
           </p>
-          <div className="bg-[#7d3d2b]/10 rounded-lg p-6 mb-8">
-            <h2 className="text-xl mb-4 text-[#7d3d2b]">What's Next?</h2>
-            <ul className="text-left space-y-2 text-gray-700">
-              <li>• You'll receive a confirmation call/WhatsApp message shortly</li>
-              <li>• We'll prepare your delicious meal fresh</li>
-              <li>• Your order will be delivered to: {formData.address}</li>
-              <li>• Estimated delivery: 30-45 minutes</li>
-            </ul>
+
+          <div className="mt-8 rounded-[1.75rem] bg-[var(--color-surface)] p-6 text-left">
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-sm text-[var(--color-muted-ink)]">Order reference</dt>
+                <dd className="mt-1 text-base font-semibold text-[var(--color-ink)]">{completedOrderId.slice(-6).toUpperCase()}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[var(--color-muted-ink)]">Total</dt>
+                <dd className="mt-1 text-base font-semibold text-[var(--color-primary)]">GH₵ {grandTotal.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[var(--color-muted-ink)]">Delivery address</dt>
+                <dd className="mt-1 text-base font-semibold text-[var(--color-ink)]">{formData.address}</dd>
+              </div>
+              <div>
+                <dt className="text-sm text-[var(--color-muted-ink)]">Contact</dt>
+                <dd className="mt-1 text-base font-semibold text-[var(--color-ink)]">{formData.phone}</dd>
+              </div>
+            </dl>
           </div>
-          <div className="space-y-4">
-            <p className="text-gray-600">
-              Order Total: <span className="text-2xl text-[#7d3d2b]">GH₵ {grandTotal.toFixed(2)}</span>
-            </p>
-            <p className="text-sm text-gray-500">
-              Payment Method: {paymentMethod === 'mobile' ? 'Mobile Money' : 'Cash on Delivery'}
-            </p>
-          </div>
-          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/"
-              className="inline-block bg-[#7d3d2b] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#6a3424] transition-colors"
-            >
-              Back to Home
+
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Link to="/orders" className="primary-button">
+              View Order History
             </Link>
-            <Link
-              to="/menu"
-              className="inline-block border-2 border-[#7d3d2b] text-[#7d3d2b] px-8 py-3 rounded-lg font-semibold hover:bg-[#7d3d2b] hover:text-white transition-colors"
-            >
+            <Link to="/menu" className="secondary-button">
               Order Again
             </Link>
           </div>
-        </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Toaster position="top-center" />
-      
-      {/* Header */}
-      <div className="bg-[#7d3d2b] text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="page-shell py-8 sm:py-10">
+      <section className="mx-auto max-w-7xl">
+        <div className="hero-panel px-6 py-10 sm:px-10 sm:py-12">
           <Link
             to="/order"
-            className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white/78 transition-colors hover:text-white"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back to Cart
+            <ArrowLeft className="h-4 w-4" />
+            Back to cart
           </Link>
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl mb-4">
-              <span className="text-[#ffd700]">Payment</span> & Delivery
-            </h1>
-            <p className="text-xl text-white/80">Complete your order details</p>
+
+          <div className="mt-6 max-w-3xl">
+            <p className="eyebrow text-[var(--color-accent)]">Checkout</p>
+            <h1 className="mt-4 text-4xl font-semibold text-white sm:text-5xl">Payment and delivery</h1>
+            <p className="mt-4 text-base leading-8 text-white/78 sm:text-lg">
+              Complete your order with Mobile Money or choose cash on delivery. Order confirmations can be sent by email, WhatsApp, or both.
+            </p>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Payment Form */}
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Delivery Information */}
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl mb-6 text-[#7d3d2b]">Delivery Information</h2>
-                <div className="space-y-4">
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1.55fr_0.95fr]">
+          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <section className="surface-card">
+              <div className="mb-6 flex items-start gap-3">
+                <div className="rounded-2xl bg-[var(--color-primary)]/10 p-3 text-[var(--color-primary)]">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Customer details</h2>
+                  <p className="mt-1 text-sm text-[var(--color-muted-ink)]">We use these details for delivery coordination, receipts, and saved order history.</p>
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <label htmlFor="name" className="form-label">Full name</label>
+                  <input
+                    id="name"
+                    value={formData.name}
+                    onChange={(event) => handleInputChange('name', event.target.value)}
+                    className="form-input"
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={errors.name ? 'name-error' : undefined}
+                    placeholder="Ama Serwaa"
+                  />
+                  {errors.name && <p id="name-error" className="form-error">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="form-label">Email address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(event) => handleInputChange('email', event.target.value)}
+                    className="form-input"
+                    aria-invalid={Boolean(errors.email)}
+                    aria-describedby={errors.email ? 'email-error' : undefined}
+                    placeholder="you@example.com"
+                  />
+                  {errors.email && <p id="email-error" className="form-error">{errors.email}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="form-label">Phone number</label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(event) => handleInputChange('phone', event.target.value)}
+                    className="form-input"
+                    aria-invalid={Boolean(errors.phone)}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
+                    placeholder="0553312217"
+                  />
+                  {errors.phone && <p id="phone-error" className="form-error">{errors.phone}</p>}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="address" className="form-label">Delivery address</label>
+                  <input
+                    id="address"
+                    value={formData.address}
+                    onChange={(event) => handleInputChange('address', event.target.value)}
+                    className="form-input"
+                    aria-invalid={Boolean(errors.address)}
+                    aria-describedby={errors.address ? 'address-error' : undefined}
+                    placeholder="Street, area, closest landmark"
+                  />
+                  {errors.address && <p id="address-error" className="form-error">{errors.address}</p>}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label htmlFor="instructions" className="form-label">Delivery instructions</label>
+                  <textarea
+                    id="instructions"
+                    rows={4}
+                    value={formData.instructions}
+                    onChange={(event) => handleInputChange('instructions', event.target.value)}
+                    className="form-input min-h-28"
+                    placeholder="Gate code, landmark, or any special delivery notes"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="surface-card">
+              <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Payment method</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('mobile')}
+                  className={`selection-card ${paymentMethod === 'mobile' ? 'selection-card-active' : ''}`}
+                >
+                  <Smartphone className="h-7 w-7" />
                   <div>
-                    <label htmlFor="name" className="block text-sm mb-2 text-gray-700">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none"
-                      placeholder="Enter your full name"
-                    />
+                    <div className="text-lg font-semibold">Mobile Money</div>
+                    <div className="mt-1 text-sm text-[var(--color-muted-ink)]">Collect payment directly on-site using Paystack, Flutterwave, or Hubtel.</div>
                   </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('cash')}
+                  className={`selection-card ${paymentMethod === 'cash' ? 'selection-card-active' : ''}`}
+                >
+                  <CreditCard className="h-7 w-7" />
                   <div>
-                    <label htmlFor="phone" className="block text-sm mb-2 text-gray-700">
-                      Phone Number *
-                    </label>
+                    <div className="text-lg font-semibold">Cash on Delivery</div>
+                    <div className="mt-1 text-sm text-[var(--color-muted-ink)]">Take the order now and settle payment when it arrives.</div>
+                  </div>
+                </button>
+              </div>
+
+              {paymentMethod === 'mobile' && (
+                <div className="mt-6 grid gap-5 border-t border-[var(--color-border-soft)] pt-6 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="gateway" className="form-label">Gateway</label>
+                    <select
+                      id="gateway"
+                      value={formData.gateway}
+                      onChange={(event) => handleInputChange('gateway', event.target.value)}
+                      className="form-input"
+                    >
+                      <option value="paystack">Paystack</option>
+                      <option value="flutterwave">Flutterwave</option>
+                      <option value="hubtel">Hubtel</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="mobileProvider" className="form-label">Provider</label>
+                    <select
+                      id="mobileProvider"
+                      value={formData.mobileProvider}
+                      onChange={(event) => handleInputChange('mobileProvider', event.target.value)}
+                      className="form-input"
+                    >
+                      <option value="mtn">MTN Mobile Money</option>
+                      <option value="telecel">Telecel Cash</option>
+                      <option value="airteltigo">AirtelTigo Money</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label htmlFor="mobileNumber" className="form-label">Mobile Money number</label>
                     <input
+                      id="mobileNumber"
                       type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none"
-                      placeholder="0XX XXX XXXX"
+                      value={formData.mobileNumber}
+                      onChange={(event) => handleInputChange('mobileNumber', event.target.value)}
+                      className="form-input"
+                      aria-invalid={Boolean(errors.mobileNumber)}
+                      aria-describedby={errors.mobileNumber ? 'mobileNumber-error' : undefined}
+                      placeholder="0553312217"
                     />
-                  </div>
-                  <div>
-                    <label htmlFor="address" className="block text-sm mb-2 text-gray-700">
-                      Delivery Address *
-                    </label>
-                    <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none"
-                      placeholder="Street, Area, Landmark"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="instructions" className="block text-sm mb-2 text-gray-700">
-                      Delivery Instructions (Optional)
-                    </label>
-                    <textarea
-                      id="instructions"
-                      name="instructions"
-                      value={formData.instructions}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none resize-none"
-                      placeholder="Any special instructions for delivery..."
-                    />
+                    {errors.mobileNumber && <p id="mobileNumber-error" className="form-error">{errors.mobileNumber}</p>}
                   </div>
                 </div>
+              )}
+            </section>
+
+            <section className="surface-card">
+              <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Confirmation preferences</h2>
+              <p className="mt-2 text-sm text-[var(--color-muted-ink)]">Choose how the customer should receive post-payment confirmation.</p>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => toggleConfirmationChannel('email')}
+                  aria-pressed={formData.confirmationChannels.includes('email')}
+                  className={`selection-card ${formData.confirmationChannels.includes('email') ? 'selection-card-active' : ''}`}
+                >
+                  <Mail className="h-6 w-6" />
+                  <div>
+                    <div className="text-lg font-semibold">Email confirmation</div>
+                    <div className="mt-1 text-sm text-[var(--color-muted-ink)]">Send a receipt, order summary, and follow-up details.</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleConfirmationChannel('whatsapp')}
+                  aria-pressed={formData.confirmationChannels.includes('whatsapp')}
+                  className={`selection-card ${formData.confirmationChannels.includes('whatsapp') ? 'selection-card-active' : ''}`}
+                >
+                  <MessageCircle className="h-6 w-6" />
+                  <div>
+                    <div className="text-lg font-semibold">WhatsApp confirmation</div>
+                    <div className="mt-1 text-sm text-[var(--color-muted-ink)]">Share payment success and delivery updates directly in chat.</div>
+                  </div>
+                </button>
               </div>
 
-              {/* Payment Method */}
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-2xl mb-6 text-[#7d3d2b]">Payment Method</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('mobile')}
-                    className={`p-6 rounded-lg border-2 transition-all ${
-                      paymentMethod === 'mobile'
-                        ? 'border-[#7d3d2b] bg-[#7d3d2b]/5'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    <Smartphone className="h-8 w-8 mx-auto mb-3 text-[#7d3d2b]" />
-                    <div className="text-lg text-[#7d3d2b]">Mobile Money</div>
-                    <div className="text-sm text-gray-600">MTN, Vodafone, AirtelTigo</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`p-6 rounded-lg border-2 transition-all ${
-                      paymentMethod === 'cash'
-                        ? 'border-[#7d3d2b] bg-[#7d3d2b]/5'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                  >
-                    <CreditCard className="h-8 w-8 mx-auto mb-3 text-[#7d3d2b]" />
-                    <div className="text-lg text-[#7d3d2b]">Cash on Delivery</div>
-                    <div className="text-sm text-gray-600">Pay when you receive</div>
-                  </button>
-                </div>
+              {errors.confirmationChannels && <p className="form-error mt-4">{errors.confirmationChannels}</p>}
+            </section>
+          </form>
 
-                {paymentMethod === 'mobile' && (
-                  <div className="space-y-4 pt-4 border-t">
-                    <div>
-                      <label htmlFor="mobileProvider" className="block text-sm mb-2 text-gray-700">
-                        Mobile Money Provider *
-                      </label>
-                      <select
-                        id="mobileProvider"
-                        name="mobileProvider"
-                        value={formData.mobileProvider}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none"
-                      >
-                        <option value="mtn">MTN Mobile Money</option>
-                        <option value="vodafone">Vodafone Cash</option>
-                        <option value="airteltigo">AirtelTigo Money</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="mobileNumber" className="block text-sm mb-2 text-gray-700">
-                        Mobile Money Number *
-                      </label>
-                      <input
-                        type="tel"
-                        id="mobileNumber"
-                        name="mobileNumber"
-                        value={formData.mobileNumber}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#7d3d2b] focus:border-transparent outline-none"
-                        placeholder="0XX XXX XXXX"
-                      />
-                    </div>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        You'll receive a prompt on your phone to approve the payment after placing your order.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {paymentMethod === 'cash' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm text-green-800">
-                      Please have exact change ready for the delivery person. GH₵ {grandTotal.toFixed(2)}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-[#7d3d2b] text-white py-4 rounded-lg font-semibold hover:bg-[#6a3424] transition-colors text-lg"
-              >
-                Place Order - GH₵ {grandTotal.toFixed(2)}
-              </button>
-            </form>
-          </div>
-
-          {/* Order Summary Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-md p-6 sticky top-24">
-              <h2 className="text-2xl mb-6 text-[#7d3d2b]">Order Summary</h2>
-              <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
+          <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+            <section className="surface-card">
+              <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Order summary</h2>
+              <div className="mt-6 space-y-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm">
-                    <span className="text-gray-700">
-                      {item.quantity}x {item.name}
-                    </span>
-                    <span className="text-gray-900">
-                      GH₵ {(item.price * item.quantity).toFixed(2)}
-                    </span>
+                  <div key={item.id} className="flex items-start justify-between gap-4 border-b border-[var(--color-border-soft)] pb-4 last:border-b-0">
+                    <div>
+                      <h3 className="font-semibold text-[var(--color-ink)]">{item.name}</h3>
+                      <p className="mt-1 text-sm text-[var(--color-muted-ink)]">Qty {item.quantity}</p>
+                    </div>
+                    <p className="font-semibold text-[var(--color-ink)]">GH₵ {(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                 ))}
               </div>
-              <div className="space-y-2 pt-4 border-t">
-                <div className="flex justify-between text-gray-700">
+
+              <div className="mt-6 space-y-3 text-sm">
+                <div className="flex justify-between text-[var(--color-muted-ink)]">
                   <span>Subtotal</span>
                   <span>GH₵ {total.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Delivery Fee</span>
+                <div className="flex justify-between text-[var(--color-muted-ink)]">
+                  <span>Delivery fee</span>
                   <span>GH₵ {deliveryFee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xl text-[#7d3d2b] pt-2 border-t">
-                  <span>Total</span>
-                  <span>GH₵ {grandTotal.toFixed(2)}</span>
+                <div className="border-t border-[var(--color-border-soft)] pt-3">
+                  <div className="flex justify-between text-lg font-semibold text-[var(--color-primary)]">
+                    <span>Total</span>
+                    <span>GH₵ {grandTotal.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
+
+              <button type="submit" form="checkout-form" disabled={isSubmitting} className="primary-button mt-6 w-full">
+                {isProcessingPayment ? (
+                  <>
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                    Processing payment...
+                  </>
+                ) : isSubmitting ? (
+                  <>
+                    <LoaderCircle className="h-5 w-5 animate-spin" />
+                    Placing order...
+                  </>
+                ) : (
+                  <>
+                    {paymentMethod === 'mobile' ? 'Pay and place order' : 'Place order'}
+                  </>
+                )}
+              </button>
+
+              <p className="mt-4 text-sm leading-6 text-[var(--color-muted-ink)]">
+                Live gateway charging works when you provide the relevant public key environment variables. Hubtel still needs a secure backend session endpoint before production use.
+              </p>
+            </section>
+          </aside>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
