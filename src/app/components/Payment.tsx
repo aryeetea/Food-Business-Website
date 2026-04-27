@@ -471,6 +471,9 @@ export function Payment() {
           <aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
             <section className="surface-card">
               <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Order summary</h2>
+              <p className="mt-2 text-sm text-[var(--color-muted-ink)]">
+                Quantity-based extras stay in the order exactly as selected. For example, <span className="font-medium">Rice (per scoop) x 3</span> means 3 scoops.
+              </p>
               <div className="mt-6 space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex items-start justify-between gap-4 border-b border-[var(--color-border-soft)] pb-4 last:border-b-0">

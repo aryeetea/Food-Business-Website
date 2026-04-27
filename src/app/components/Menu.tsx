@@ -26,7 +26,7 @@ export function Menu() {
 
     // Extras
     { id: '5', name: 'Beans', price: 10, category: 'extras', description: 'Extra beans' },
-    { id: '6', name: 'Rice', price: 5, category: 'extras', description: 'Per scoop' },
+    { id: '6', name: 'Rice (per scoop)', price: 5, category: 'extras', description: 'Add 1 quantity for each scoop you want' },
     { id: '7', name: 'Plantain', price: 2, category: 'extras', description: 'Extra plantain' },
     { id: '8', name: 'Egg', price: 3.5, category: 'extras', description: 'Extra egg' },
     { id: '9', name: 'Gizzard', price: 5, category: 'extras', description: 'Extra gizzard' },
@@ -94,6 +94,12 @@ export function Menu() {
 
       {/* Menu Items Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {selectedCategory === 'extras' && (
+          <div className="mb-8 rounded-3xl border border-orange-200 bg-orange-50 p-5 text-center text-sm text-orange-900 sm:text-base">
+            Extras priced per scoop or per piece can be increased in your cart. For example, add <span className="font-semibold">Rice (per scoop)</span> once, then increase the quantity to choose how many scoops you want.
+          </div>
+        )}
+
         {selectedCategory === 'gobe' && (
           <div className="mb-12 bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-orange-200 rounded-3xl p-8 text-center">
             <Sparkles className="h-12 w-12 text-orange-500 mx-auto mb-4" />

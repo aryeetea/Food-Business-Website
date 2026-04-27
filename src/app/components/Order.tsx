@@ -37,6 +37,9 @@ export function Order() {
             <div className="grid gap-8 lg:grid-cols-[1.55fr_0.95fr]">
               <div className="surface-card">
                 <h2 className="text-2xl font-semibold text-[var(--color-ink)]">Cart items</h2>
+                <p className="mt-2 text-sm text-[var(--color-muted-ink)]">
+                  For items like <span className="font-medium">Rice (per scoop)</span>, the quantity equals the number of scoops in your order.
+                </p>
                 <div className="mt-6 space-y-4">
                   {items.map((item) => (
                     <article
