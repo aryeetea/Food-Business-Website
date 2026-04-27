@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 import { ArrowRight, Clock, Shield, Sparkles, Heart, Star } from 'lucide-react';
-// @ts-ignore
-import bannerImage from "../../assets/main.png";
+import homeFoodCollage from "../../assets/home-food-collage.png";
 
 export function Home() {
   const features = [
@@ -83,20 +82,16 @@ export function Home() {
         </div>
       </section>
 
-      {/* Banner Image Section */}
-      <section className="py-16 bg-gradient-to-br from-amber-50 to-yellow-50">
+      {/* Brand Showcase Section */}
+      <section className="py-16 bg-gradient-to-br from-amber-50 to-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-            <img 
-              src={bannerImage} 
-              alt="Gobɛ Hemaa - Authentic Ghanaian Food" 
-              className="w-full h-96 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end">
-              <div className="p-8 text-white">
-                <h2 className="text-3xl md:text-4xl font-bold mb-2">Eat local, feel royal</h2>
-                <p className="text-lg text-white/90">Local, authentic, delicious.</p>
-              </div>
+          <div className="mx-auto max-w-6xl rounded-[2rem] border-[10px] border-[#2f2b24] bg-[linear-gradient(180deg,#fff8eb,#f6edd9)] p-3 shadow-[0_24px_60px_rgba(47,43,36,0.2)]">
+            <div className="overflow-hidden rounded-[1.5rem] ring-1 ring-orange-200/70">
+              <img
+                src={homeFoodCollage}
+                alt="Gobɛ Hemaa food collage featuring beans, eggs, gizzard, avocado, plantain, and rice"
+                className="w-full object-cover"
+              />
             </div>
           </div>
         </div>

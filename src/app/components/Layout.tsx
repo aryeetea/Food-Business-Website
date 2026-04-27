@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router';
 import { Menu, X, ShoppingCart, Phone, Instagram, LogOut, User, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
-import logo from "../../assets/logo-refined.png";
+import logo from "../../assets/logo-refined-cream.png";
 import { useCart } from './CartContext';
 import { useAuth } from './AuthContext';
 import { Toaster } from './ui/sonner';
