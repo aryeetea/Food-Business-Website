@@ -4,6 +4,7 @@ import { prisma } from './db.js';
 
 const app = express();
 const port = Number(process.env.PORT ?? 4000);
+const host = process.env.HOST ?? '127.0.0.1';
 const corsOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
 
 app.use(
@@ -162,6 +163,6 @@ app.post('/api/orders', async (request, response) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`API server listening on http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`API server listening on http://${host}:${port}`);
 });
