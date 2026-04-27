@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { ArrowRight, Clock, Shield, Sparkles, Heart, Star } from 'lucide-react';
-import homeFoodCollage from "../../assets/home-food-collage.png";
+import homeFoodCollage from '../../assets/home-food-collage.png';
 
 export function Home() {
   const features = [
