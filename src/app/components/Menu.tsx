@@ -3,6 +3,7 @@ import { Plus, Sparkles } from 'lucide-react';
 import { useCart, MenuItem as MenuItemType } from './CartContext';
 import { toast } from 'sonner';
 import { Toaster } from './ui/sonner';
+import { getDescriptionItems } from './menuDescription';
 
 export function Menu() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -126,7 +127,13 @@ export function Menu() {
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-600 mb-6 leading-relaxed">{item.description}</p>
+                <ul className="mb-6 list-disc space-y-1 pl-5 text-gray-600 marker:text-[#de6f12]">
+                  {getDescriptionItems(item.description).map((detail) => (
+                    <li key={`${item.id}-${detail}`} className="leading-relaxed">
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
                 <button
                   onClick={() => handleAddToCart(item)}
                   className="w-full bg-[#de6f12] text-white py-4 rounded-2xl font-bold hover:shadow-xl transition-all flex items-center justify-center space-x-2 group-hover:scale-105"

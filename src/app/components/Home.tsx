@@ -138,9 +138,9 @@ export function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { name: 'Gobe Combo', price: '35', description: 'Beans/plantain/chilli/egg/sausage/garnished oil', rating: 5 },
-              { name: 'Special Gobe Combo', price: '45', description: 'Beans/assorted mix/plantain/egg/sausage/garnished oil', rating: 5 },
-              { name: 'Assorted Jollof rice', price: '80', description: 'Assorted Jollof rice', rating: 5 },
+              { name: 'Gobe Combo', price: '35', details: ['Beans', 'Plantain', 'Chilli', 'Egg', 'Sausage', 'Garnished oil'], rating: 5 },
+              { name: 'Special Gobe Combo', price: '45', details: ['Beans', 'Assorted mix', 'Plantain', 'Egg', 'Sausage', 'Garnished oil'], rating: 5 },
+              { name: 'Assorted Jollof rice', price: '80', details: ['Assorted Jollof rice'], rating: 5 },
             ].map((item, index) => (
               <div
                 key={index}
@@ -153,7 +153,14 @@ export function Home() {
                 </div>
                 <h3 className="text-3xl font-bold mb-2 text-white">{item.name}</h3>
                 <p className="text-4xl mb-4 font-black text-white">GH₵ {item.price}</p>
-                <p className="text-white/90 text-lg">{item.description}</p>
+                <ul className="space-y-2 text-white/90 text-lg">
+                  {item.details.map((detail) => (
+                    <li key={detail} className="flex items-start gap-2">
+                      <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-white"></span>
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>

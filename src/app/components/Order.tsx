@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router';
 import { ArrowRight, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from './CartContext';
+import { getDescriptionItems } from './menuDescription';
 
 export function Order() {
   const { items, updateQuantity, removeItem, total } = useCart();
@@ -50,6 +51,13 @@ export function Order() {
                         <div className="min-w-0 flex-1">
                           <h3 className="text-xl font-semibold text-[var(--color-ink)]">{item.name}</h3>
                           <p className="mt-1 text-sm text-[var(--color-muted-ink)]">{item.category}</p>
+                          {getDescriptionItems(item.description).length > 0 && (
+                            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[var(--color-muted-ink)] marker:text-[var(--color-primary)]">
+                              {getDescriptionItems(item.description).map((detail) => (
+                                <li key={`${item.id}-${detail}`}>{detail}</li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
 
                         <div className="flex items-center justify-between gap-4 sm:justify-end">

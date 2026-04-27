@@ -3,6 +3,7 @@ import { Clock3, PackageCheck, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from './AuthContext';
 import { useOrderHistory } from './OrderHistoryContext';
+import { getDescriptionItems } from './menuDescription';
 
 export function OrderHistory() {
   const { isAuthenticated, isReady, user } = useAuth();
@@ -80,8 +81,17 @@ export function OrderHistory() {
 
                     <ul className="space-y-2 text-sm text-[var(--color-muted-ink)]">
                       {order.items.map((item) => (
-                        <li key={item.id} className="flex items-center justify-between gap-4 border-b border-[var(--color-border-soft)] pb-2 last:border-b-0 last:pb-0">
-                          <span>{item.name} x {item.quantity}</span>
+                        <li key={item.id} className="flex items-start justify-between gap-4 border-b border-[var(--color-border-soft)] pb-2 last:border-b-0 last:pb-0">
+                          <div>
+                            <span>{item.name} x {item.quantity}</span>
+                            {getDescriptionItems(item.description).length > 0 && (
+                              <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-[var(--color-muted-ink)] marker:text-[var(--color-primary)]">
+                                {getDescriptionItems(item.description).map((detail) => (
+                                  <li key={`${item.id}-${detail}`}>{detail}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
                           <span className="font-medium text-[var(--color-ink)]">GH₵ {(item.price * item.quantity).toFixed(2)}</span>
                         </li>
                       ))}

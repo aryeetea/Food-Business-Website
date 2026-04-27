@@ -15,6 +15,7 @@ import { useCart } from './CartContext';
 import { useAuth } from './AuthContext';
 import { type ConfirmationChannel, useOrderHistory } from './OrderHistoryContext';
 import { processGatewayPayment } from './paymentGateway';
+import { getDescriptionItems } from './menuDescription';
 
 type PaymentMethod = 'mobile' | 'cash';
 type GatewaySelection = 'paystack' | 'flutterwave' | 'hubtel';
@@ -65,6 +66,7 @@ export function Payment() {
         name: item.name,
         price: item.price,
         quantity: item.quantity,
+        description: item.description,
       })),
     [items],
   );
@@ -480,6 +482,13 @@ export function Payment() {
                     <div>
                       <h3 className="font-semibold text-[var(--color-ink)]">{item.name}</h3>
                       <p className="mt-1 text-sm text-[var(--color-muted-ink)]">Qty {item.quantity}</p>
+                      {getDescriptionItems(item.description).length > 0 && (
+                        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[var(--color-muted-ink)] marker:text-[var(--color-primary)]">
+                          {getDescriptionItems(item.description).map((detail) => (
+                            <li key={`${item.id}-${detail}`}>{detail}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                     <p className="font-semibold text-[var(--color-ink)]">GH₵ {(item.price * item.quantity).toFixed(2)}</p>
                   </div>
