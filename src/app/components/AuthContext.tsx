@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
+import { isApiConfigured, upsertUser } from '../api';
 
 export interface AuthUser {
   email: string;
@@ -16,7 +17,7 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isReady: boolean;
-  signIn: (payload: SignInPayload) => void;
+  signIn: (payload: SignInPayload) => Promise<void>;
   signOut: () => void;
 }
 
@@ -42,21 +43,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsReady(true);
   }, []);
 
-  const signIn = (payload: SignInPayload) => {
+  const signIn = useCallback(async (payload: SignInPayload) => {
     const nextUser = {
       email: payload.email.trim().toLowerCase(),
       fullName: payload.fullName.trim(),
       phone: payload.phone.trim(),
     };
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
-    setUser(nextUser);
-  };
+    const persistedUser = isApiConfigured ? await upsertUser(nextUser) : nextUser;
 
-  const signOut = () => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedUser));
+    setUser(persistedUser);
+  }, []);
+
+  const signOut = useCallback(() => {
     window.localStorage.removeItem(STORAGE_KEY);
     setUser(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -66,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
     }),
-    [isReady, user],
+    [isReady, signIn, signOut, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

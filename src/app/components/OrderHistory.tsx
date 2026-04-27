@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, Navigate, useLocation } from 'react-router';
 import { Clock3, PackageCheck, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
@@ -7,10 +8,18 @@ import { getDescriptionItems } from './menuDescription';
 
 export function OrderHistory() {
   const { isAuthenticated, isReady, user } = useAuth();
-  const { getOrdersByEmail } = useOrderHistory();
+  const { getOrdersByEmail, isLoadingOrders, loadOrdersByEmail } = useOrderHistory();
   const location = useLocation();
 
-  if (!isReady) {
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    void loadOrdersByEmail(user.email);
+  }, [loadOrdersByEmail, user]);
+
+  if (!isReady || isLoadingOrders) {
     return (
       <div className="page-shell py-16">
         <div className="mx-auto max-w-3xl rounded-[2rem] border border-[var(--color-border-soft)] bg-white/90 p-10 text-center shadow-[var(--shadow-soft)]">

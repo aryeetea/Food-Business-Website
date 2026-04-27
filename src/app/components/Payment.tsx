@@ -167,7 +167,7 @@ export function Payment() {
         gatewayNotice = gatewayResult.status === 'sandbox' ? gatewayResult.message : '';
       }
 
-      addOrder({
+      await addOrder({
         id: orderId,
         customerName: formData.name.trim(),
         customerEmail: formData.email.trim().toLowerCase(),

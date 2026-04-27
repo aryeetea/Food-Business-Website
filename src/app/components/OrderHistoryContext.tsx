@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, type ReactNode } from 'react';
+import { createOrder, fetchOrdersByEmail, isApiConfigured } from '../api';
 
 export type PaymentGateway = 'paystack' | 'flutterwave' | 'hubtel' | 'cash';
 export type PaymentStatus = 'paid' | 'pending' | 'failed';
@@ -32,8 +33,10 @@ export interface OrderRecord {
 
 interface OrderHistoryContextType {
   orders: OrderRecord[];
-  addOrder: (order: OrderRecord) => void;
+  addOrder: (order: OrderRecord) => Promise<void>;
   getOrdersByEmail: (email: string) => OrderRecord[];
+  loadOrdersByEmail: (email: string) => Promise<void>;
+  isLoadingOrders: boolean;
 }
 
 const STORAGE_KEY = 'gobe-hemaa-orders';
@@ -42,6 +45,7 @@ const OrderHistoryContext = createContext<OrderHistoryContextType | undefined>(u
 
 export function OrderHistoryProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
   useEffect(() => {
     const savedOrders = window.localStorage.getItem(STORAGE_KEY);
@@ -57,24 +61,54 @@ export function OrderHistoryProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const addOrder = (order: OrderRecord) => {
+  const persistLocalOrders = useCallback((nextOrders: OrderRecord[]) => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextOrders));
+    setOrders(nextOrders);
+  }, []);
+
+  const addOrder = useCallback(async (order: OrderRecord) => {
+    if (isApiConfigured) {
+      const savedOrder = await createOrder(order);
+      setOrders((currentOrders) => [savedOrder, ...currentOrders.filter((entry) => entry.id !== savedOrder.id)]);
+      return;
+    }
+
     setOrders((currentOrders) => {
       const nextOrders = [order, ...currentOrders];
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextOrders));
       return nextOrders;
     });
-  };
+  }, []);
 
-  const getOrdersByEmail = (email: string) =>
-    orders.filter((order) => order.customerEmail.toLowerCase() === email.trim().toLowerCase());
+  const getOrdersByEmail = useCallback(
+    (email: string) => orders.filter((order) => order.customerEmail.toLowerCase() === email.trim().toLowerCase()),
+    [orders],
+  );
+
+  const loadOrdersByEmail = useCallback(async (email: string) => {
+    if (!isApiConfigured) {
+      return;
+    }
+
+    setIsLoadingOrders(true);
+
+    try {
+      const remoteOrders = await fetchOrdersByEmail(email);
+      persistLocalOrders(remoteOrders);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  }, [persistLocalOrders]);
 
   const value = useMemo(
     () => ({
       orders,
       addOrder,
       getOrdersByEmail,
+      loadOrdersByEmail,
+      isLoadingOrders,
     }),
-    [orders],
+    [addOrder, getOrdersByEmail, isLoadingOrders, loadOrdersByEmail, orders],
   );
 
   return <OrderHistoryContext.Provider value={value}>{children}</OrderHistoryContext.Provider>;

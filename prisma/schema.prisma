@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum PaymentGateway {
+  paystack
+  flutterwave
+  hubtel
+  cash
+}
+
+enum PaymentStatus {
+  paid
+  pending
+  failed
+}
+
+enum ConfirmationChannel {
+  email
+  whatsapp
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  fullName  String
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id                   String                @id
+  customerName         String
+  customerEmail        String
+  customerPhone        String
+  deliveryAddress      String
+  deliveryInstructions String?
+  confirmationChannels ConfirmationChannel[]
+  paymentGateway       PaymentGateway
+  paymentStatus        PaymentStatus
+  paymentReference     String                @unique
+  subtotal             Float
+  deliveryFee          Float
+  total                Float
+  createdAt            DateTime
+  updatedAt            DateTime              @updatedAt
+  userId               String?
+  user                 User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items                OrderItem[]
+
+  @@index([customerEmail])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String @id @default(cuid())
+  menuItemId  String
+  name        String
+  quantity    Int
+  price       Float
+  description String?
+  orderId     String
+  order       Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}

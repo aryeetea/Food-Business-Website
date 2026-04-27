@@ -18,6 +18,7 @@ export function SignIn() {
     phone: user?.phone ?? '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const redirectTo = (location.state as { from?: string } | null)?.from ?? '/orders';
 
@@ -44,7 +45,7 @@ export function SignIn() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     if (!validate()) {
@@ -52,13 +53,22 @@ export function SignIn() {
       return;
     }
 
-    signIn(formData);
-    toast.success(
-      isCreateAccount
-        ? 'Your account is ready and your order history has been unlocked.'
-        : 'You are signed in and your order history is ready.',
-    );
-    navigate(redirectTo, { replace: true });
+    setIsSubmitting(true);
+
+    try {
+      await signIn(formData);
+      toast.success(
+        isCreateAccount
+          ? 'Your account is ready and your order history has been unlocked.'
+          : 'You are signed in and your order history is ready.',
+      );
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign in right now.';
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -127,9 +137,9 @@ export function SignIn() {
             {errors.phone && <p id="phone-error" className="form-error">{errors.phone}</p>}
           </div>
 
-          <button type="submit" className="primary-button w-full">
+          <button type="submit" disabled={isSubmitting} className="primary-button w-full">
             <UserCircle2 className="h-5 w-5" />
-            {isCreateAccount ? 'Create Account' : 'Sign In'}
+            {isSubmitting ? 'Saving account...' : isCreateAccount ? 'Create Account' : 'Sign In'}
           </button>
         </form>
 
